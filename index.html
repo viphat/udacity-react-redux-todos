@@ -242,16 +242,16 @@
 
           return API.saveGoal(this.input.value).then((goal) => {
             this.input.value = ''
-            this.props.store.dispatch(addGoalAction(goal))
+            this.props.dispatch(addGoalAction(goal))
           }).catch(() => {
             alert('An error occurred. Try again.')
           })
         }
 
         removeItem = (goal) => {
-          this.props.store.dispatch(removeGoalAction(goal.id))
+          this.props.dispatch(removeGoalAction(goal.id))
           return API.deleteGoal(goal.id).catch(() => {
-            this.props.store.dispatch(addGoalAction(goal))
+            this.props.dispatch(addGoalAction(goal))
             alert('An error occurred. Try again.')
           })
         }
@@ -269,6 +269,45 @@
                 remove={this.removeItem}
               />
             </div>
+          )
+        }
+      }
+
+      const Context = React.createContext()
+
+      class ConnectedGoals extends React.Component {
+        render() {
+          return (
+            <Context.Consumer>
+              {
+                (store) => {
+                  const { goals } = store.getState()
+                  return <Goals goals={goals} dispatch={store.dispatch} />
+                }
+              }
+            </Context.Consumer>
+          )
+        }
+      }
+
+      class ConnectedApp extends React.Component {
+        render() {
+          return (
+            <Context.Consumer>
+              {(store) => (
+                <App store={store} />
+              )}
+            </Context.Consumer>
+          )
+        }
+      }
+
+      class Provider extends React.Component {
+        render() {
+          return (
+            <Context.Provider value={this.props.store}>
+              {this.props.children}
+            </Context.Provider>
           )
         }
       }
@@ -292,14 +331,16 @@
           return (
             <div>
               <Todos todos={todos} store={store} />
-              <Goals goals={goals} store={store} />
+              <ConnectedGoals />
             </div>
           )
         }
       }
 
       ReactDOM.render(
-        <App store={store} />,
+        <Provider store={store}>
+          <ConnectedApp />
+        </Provider>,
         document.getElementById('app')
       );
     </script>
